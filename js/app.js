@@ -20,6 +20,108 @@ const firebaseConfig = {
 const CLOUDINARY_CLOUD_NAME = "dx4cgsmaa";
 const CLOUDINARY_UPLOAD_PRESET = "GCLF iMAGES";
 
+// ===================== FIRESTORE SYNC (FREE CROSS-DEVICE PERSISTENCE) =====================
+let dbFirestore = null;
+
+function initFirestore() {
+  initFirebaseIfNeeded();
+  if (!dbFirestore) {
+    dbFirestore = firebase.firestore();
+  }
+  return dbFirestore;
+}
+
+// Sync all app data to Firestore (called after any data change)
+async function syncToFirestore() {
+  try {
+    const db = initFirestore();
+    const data = {
+      itemsData,
+      allClaims,
+      myClaimsByEmail,
+      studentProfiles,
+      lostReports,
+      pendingFoundReports,
+      lostItemLeads,
+      auditLogs,
+      notifications,
+      systemConfig,
+      lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    await db.collection("gclf_data").doc("main").set(data);
+    console.log("[GCLF] Data synced to Firestore");
+    return true;
+  } catch (e) {
+    console.warn("[GCLF] Firestore sync failed:", e);
+    return false;
+  }
+}
+
+// Load data from Firestore (called on app startup)
+async function loadFromFirestore() {
+  try {
+    const db = initFirestore();
+    const doc = await db.collection("gclf_data").doc("main").get();
+    if (doc.exists) {
+      const data = doc.data();
+      itemsData = Array.isArray(data.itemsData) ? data.itemsData : [];
+      allClaims = Array.isArray(data.allClaims) ? data.allClaims : [];
+      myClaimsByEmail = data.myClaimsByEmail && typeof data.myClaimsByEmail === "object" ? data.myClaimsByEmail : {};
+      studentProfiles = data.studentProfiles && typeof data.studentProfiles === "object" ? data.studentProfiles : {};
+      lostReports = Array.isArray(data.lostReports) ? data.lostReports : [];
+      pendingFoundReports = Array.isArray(data.pendingFoundReports) ? data.pendingFoundReports : [];
+      lostItemLeads = Array.isArray(data.lostItemLeads) ? data.lostItemLeads : [];
+      auditLogs = Array.isArray(data.auditLogs) ? data.auditLogs : [];
+      notifications = Array.isArray(data.notifications) ? data.notifications : [];
+      systemConfig = data.systemConfig && typeof data.systemConfig === "object" ? { ...systemConfig, ...data.systemConfig } : systemConfig;
+      console.log("[GCLF] Data loaded from Firestore");
+      return true;
+    }
+    return false;
+  } catch (e) {
+    console.warn("[GCLF] Firestore load failed:", e);
+    return false;
+  }
+}
+
+// Listen for real-time updates from other devices
+function startFirestoreListener() {
+  try {
+    const db = initFirestore();
+    db.collection("gclf_data").doc("main").onSnapshot((doc) => {
+      if (doc.exists) {
+        const data = doc.data();
+        itemsData = Array.isArray(data.itemsData) ? data.itemsData : itemsData;
+        allClaims = Array.isArray(data.allClaims) ? data.allClaims : allClaims;
+        myClaimsByEmail = data.myClaimsByEmail && typeof data.myClaimsByEmail === "object" ? data.myClaimsByEmail : myClaimsByEmail;
+        studentProfiles = data.studentProfiles && typeof data.studentProfiles === "object" ? data.studentProfiles : studentProfiles;
+        lostReports = Array.isArray(data.lostReports) ? data.lostReports : lostReports;
+        pendingFoundReports = Array.isArray(data.pendingFoundReports) ? data.pendingFoundReports : pendingFoundReports;
+        lostItemLeads = Array.isArray(data.lostItemLeads) ? data.lostItemLeads : lostItemLeads;
+        auditLogs = Array.isArray(data.auditLogs) ? data.auditLogs : auditLogs;
+        notifications = Array.isArray(data.notifications) ? data.notifications : notifications;
+        systemConfig = data.systemConfig && typeof data.systemConfig === "object" ? { ...systemConfig, ...data.systemConfig } : systemConfig;
+        // Refresh UI
+        syncMyClaims();
+        renderItems();
+        renderPublicLostItems();
+        renderLostReportsList();
+        renderMyClaims();
+        renderMyFoundReportsList();
+        renderAdminItems();
+        renderAdminClaims();
+        renderAdminReports();
+        updateStudentStats();
+        updateAdminStats();
+        renderDashboardMixed();
+        console.log("[GCLF] Real-time update received from Firestore");
+      }
+    });
+  } catch (e) {
+    console.warn("[GCLF] Firestore listener failed:", e);
+  }
+}
+
 const seedItems = [];
 const PLACEHOLDER_ITEM_NAMES = new Set([
   "Black Samsung Galaxy A54",
@@ -288,6 +390,8 @@ async function savePersisted() {
     // IndexedDB has 50MB+ limit - no quota management needed
     const data = JSON.parse(persistPayload());
     await setToIndexedDB(STORAGE_KEY, data);
+    // Sync to Firestore for cross-device access (free tier)
+    await syncToFirestore();
     return true;
   } catch (e) {
     console.warn("IndexedDB save failed:", e);
@@ -311,30 +415,37 @@ async function savePersisted() {
 }
 
 async function bootstrapData() {
-  const p = await loadPersisted();
-  if (p) {
-    itemsData = Array.isArray(p.itemsData) && p.itemsData.length ? p.itemsData : [...seedItems];
-    allClaims = Array.isArray(p.allClaims) ? p.allClaims : [];
-    myClaimsByEmail = p.myClaimsByEmail && typeof p.myClaimsByEmail === "object" ? p.myClaimsByEmail : {};
-    studentProfiles = p.studentProfiles && typeof p.studentProfiles === "object" ? p.studentProfiles : {};
-    lostReports = Array.isArray(p.lostReports) ? p.lostReports : [];
-    pendingFoundReports = Array.isArray(p.pendingFoundReports) ? p.pendingFoundReports : [];
-    lostItemLeads = Array.isArray(p.lostItemLeads) ? p.lostItemLeads : [];
-    auditLogs = Array.isArray(p.auditLogs) ? p.auditLogs : [];
-    notifications = Array.isArray(p.notifications) ? p.notifications : [];
-    systemConfig = p.systemConfig && typeof p.systemConfig === "object" ? { ...systemConfig, ...p.systemConfig } : systemConfig;
-  } else {
-    itemsData = [...seedItems];
-    allClaims = [];
-    myClaimsByEmail = {};
-    studentProfiles = {};
-    lostReports = [];
-    pendingFoundReports = [];
-    lostItemLeads = [];
-    auditLogs = [];
-    notifications = [];
-    await savePersisted();
+  // Try Firestore first for cross-device sync (free tier)
+  const firestoreLoaded = await loadFromFirestore();
+  
+  if (!firestoreLoaded) {
+    // Fallback to local storage if Firestore unavailable or empty
+    const p = await loadPersisted();
+    if (p) {
+      itemsData = Array.isArray(p.itemsData) && p.itemsData.length ? p.itemsData : [...seedItems];
+      allClaims = Array.isArray(p.allClaims) ? p.allClaims : [];
+      myClaimsByEmail = p.myClaimsByEmail && typeof p.myClaimsByEmail === "object" ? p.myClaimsByEmail : {};
+      studentProfiles = p.studentProfiles && typeof p.studentProfiles === "object" ? p.studentProfiles : {};
+      lostReports = Array.isArray(p.lostReports) ? p.lostReports : [];
+      pendingFoundReports = Array.isArray(p.pendingFoundReports) ? p.pendingFoundReports : [];
+      lostItemLeads = Array.isArray(p.lostItemLeads) ? p.lostItemLeads : [];
+      auditLogs = Array.isArray(p.auditLogs) ? p.auditLogs : [];
+      notifications = Array.isArray(p.notifications) ? p.notifications : [];
+      systemConfig = p.systemConfig && typeof p.systemConfig === "object" ? { ...systemConfig, ...p.systemConfig } : systemConfig;
+    } else {
+      itemsData = [...seedItems];
+      allClaims = [];
+      myClaimsByEmail = {};
+      studentProfiles = {};
+      lostReports = [];
+      pendingFoundReports = [];
+      lostItemLeads = [];
+      auditLogs = [];
+      notifications = [];
+      await savePersisted();
+    }
   }
+  
   // Remove old placeholder/seed items so listings are fully report-based.
   itemsData = itemsData.filter((x) => !PLACEHOLDER_ITEM_NAMES.has(String(x?.name || "").trim()));
   // Normalize lost report statuses to keep old entries visible in admin/review flow.
@@ -348,6 +459,9 @@ async function bootstrapData() {
     status: normalizeReviewStatus(r.status, "Pending Review")
   }));
   await savePersisted();
+  
+  // Start real-time listener for updates from other devices
+  startFirestoreListener();
 }
 
 function syncMyClaims() {
