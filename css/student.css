@@ -35,7 +35,7 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
   width: 460px; height: 460px;
   background: radial-gradient(circle, rgba(255,255,255,0.12), rgba(255,255,255,0.03) 65%, rgba(255,255,255,0));
   border-radius: 50%;
-  top: 50%; left: 50%; transform: translate(-50%,-50%);
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
 }
 .login-left::after {
   content: ''; position: absolute;
@@ -70,7 +70,7 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
   position: absolute;
   left: 50%;
   bottom: 42px;
-  transform: translateX(-10%);
+  transform: translateX(-50%);
   z-index: 2;
 }
 .badge-logo {
@@ -672,15 +672,6 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
   max-width: 600px;
 }
 
-/* ===================== RESPONSIVE ===================== */
-@media (max-width: 768px) {
-  :root { --sidebar-w: 68px; }
-  .sb-name, .sb-role, .sb-item span { display: none; }
-  .sb-item { padding: 15px 4px; }
-  .login-left { min-height: 38vh; }
-  #loginPage { flex-direction: column; }
-}
-
 /* ===================== MISC ===================== */
 .no-results {
   text-align: center; padding: 40px; color: #aaa;
@@ -795,46 +786,62 @@ select.f-input {
   padding-right: 36px;
 }
 
-/* ===================== REPORT CARD ===================== */
-.report-card {
-  background: #fff; border-radius: 14px;
-  padding: 26px; box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-  max-width: 600px;
-}
+/* Center profile report card on page */
+#s-profile .report-card { margin-left: auto; margin-right: auto; background: transparent; box-shadow: none; padding:0; }
+.profile-edit-form { background: #fff; border-radius: 14px; padding:26px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); max-width: 420px; margin: 0 auto; }
 
 /* ===================== RESPONSIVE ===================== */
+/* Tablet and below */
+@media (max-width: 992px) {
+  .topbar-title { font-size: 0.9rem; }
+  .admin-header-bar { flex-direction: column; align-items: flex-start; }
+  .stat-card { padding: 14px 16px; }
+  .stat-num { font-size: 1.6rem; }
+}
+
+/* Mobile landscape and below */
 @media (max-width: 768px) {
   :root { --sidebar-w: 68px; }
   .sb-name, .sb-role, .sb-item span { display: none; }
   .sb-item { padding: 15px 4px; }
-  .login-left { min-height: 38vh; }
+  .login-left { min-height: 38vh; padding: 32px 24px; }
   #loginPage { flex-direction: column; }
+  .login-right { padding: 32px 24px; }
+  .login-form-box { padding: 14px; }
+  .illus-main-img { max-width: 280px; transform: translateY(-40px); }
+  .login-badges { gap: 24px; bottom: 24px; }
+  .badge-logo { width: 100px; height: 100px; }
+  .main-content { padding: 20px 16px 40px; }
+  .page-hdr-title { font-size: 1.4rem; }
+  .search-bar { flex-direction: column; align-items: stretch; }
+  .s-input-wrap { min-width: 100%; }
+  .s-select { width: 100%; }
+  .btn-gc { width: 100%; justify-content: center; }
+  .admin-table th, .admin-table td { padding: 8px 12px; font-size: 0.8rem; }
 }
 
-/* ===================== MISC ===================== */
-.no-results {
-  text-align: center; padding: 40px; color: #aaa;
-  font-size: 0.97rem; grid-column: 1/-1;
+/* Small mobile */
+@media (max-width: 576px) {
+  :root { --sidebar-w: 0px; }
+  .sidebar { transform: translateX(-100%); transition: transform 0.25s; }
+  body.sidebar-open .sidebar { transform: translateX(0); width: 200px; }
+  body.sidebar-open .sb-name,
+  body.sidebar-open .sb-role,
+  body.sidebar-open .sb-item span { display: flex; }
+  .topbar { left: 0; }
+  .main-content { margin-left: 0; }
+  .topbar-title { font-size: 0.8rem; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stat-card { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .stat-icon { width: 44px; height: 44px; font-size: 1.2rem; }
+  .stat-num { font-size: 1.5rem; }
+  .item-card-thumb { height: 140px; }
+  .item-card-thumb img { height: 140px; }
+  .modal-card { width: 98%; margin: 10px; }
+  .modal-body-pad { padding: 16px; }
+  .login-left { min-height: 30vh; }
+  .illus-main-img { max-width: 220px; }
+  .badge-logo { width: 80px; height: 80px; }
+  .login-badges { gap: 16px; }
+  .claim-row { flex-direction: column; align-items: flex-start; }
+  .claim-thumb { width: 48px; height: 48px; font-size: 20px; }
 }
-.divider-text {
-  display: flex; align-items: center; gap: 10px;
-  margin: 14px 0 10px; color: #bbb; font-size: 0.82rem;
-}
-.divider-text::before, .divider-text::after {
-  content: ''; flex: 1; border-top: 1px solid #e0e6f0;
-}
-.tab-nav {
-  display: flex; gap: 0; background: #eef2fa;
-  border-radius: 10px; padding: 4px; margin-bottom: 20px;
-  width: fit-content;
-}
-.tab-btn {
-  padding: 7px 20px; border-radius: 8px; font-size: 0.87rem;
-  font-weight: 600; cursor: pointer; border: none;
-  background: transparent; color: #888; transition: all 0.18s;
-}
-.tab-btn.active { background: var(--gc-blue); color: #fff; }
-.tab-btn:hover:not(.active) { background: rgba(26,95,172,0.1); color: var(--gc-blue); }
-/* Center profile report card on page */
-#s-profile .report-card { margin-left: auto; margin-right: auto; background: transparent; box-shadow: none; padding: 0; }
-.profile-edit-form { background: #fff; border-radius: 14px; padding: 26px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); max-width: 420px; margin: 0 auto; }

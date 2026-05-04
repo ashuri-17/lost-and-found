@@ -96,7 +96,7 @@
   <!-- TOPBAR -->
   <div class="topbar">
     <div class="topbar-left">
-      <i class="bi bi-list topbar-hamburger"></i>
+      <i class="bi bi-list topbar-hamburger" onclick="toggleSidebar()"></i>
       <span class="topbar-title">GCLF &mdash; Gordon College Lost &amp; Found</span>
     </div>
     <div class="topbar-right">
@@ -287,7 +287,7 @@
   <!-- ADMIN TOPBAR -->
   <div class="topbar">
     <div class="topbar-left">
-      <i class="bi bi-list topbar-hamburger"></i>
+      <i class="bi bi-list topbar-hamburger" onclick="toggleSidebar()"></i>
       <span class="topbar-title">GCLF &mdash; Admin Control Panel</span>
     </div>
     <div class="topbar-right">
@@ -561,5 +561,21 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <!-- Custom JS -->
 <script src="js/app.js"></script>
+<script>
+// Mobile sidebar toggle
+function toggleSidebar() {
+  document.body.classList.toggle('sidebar-open');
+}
+// Close sidebar when clicking outside on mobile
+document.addEventListener('click', function(e) {
+  if (window.innerWidth <= 576 && document.body.classList.contains('sidebar-open')) {
+    const sidebar = document.querySelector('.sidebar');
+    const hamburger = document.querySelector('.topbar-hamburger');
+    if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+      document.body.classList.remove('sidebar-open');
+    }
+  }
+});
+</script>
 </body>
 </html>
